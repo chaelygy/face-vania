@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================
  *  FACE RECOGNITION SYSTEM - Frontend Logic
  *  
@@ -201,27 +201,52 @@ function setStatus(state, text) {
 }
 
 // â”€â”€â”€ Load Persons â”€â”€â”€
+let cachedPersons = [];
+
 async function loadPersonsList() {
     try {
         const res = await fetch(`${API_BASE}/api/persons`);
         const data = await res.json();
         
         if (data.persons && data.persons.length > 0) {
-            elements.personsGrid.innerHTML = data.persons.map(p => `
-                <div class="person-chip">
-                    <div class="person-avatar">${getInitials(p.name)}</div>
-                    <div>
-                        <div class="person-name">${escapeHtml(p.name)}</div>
-                        <div class="person-photos">${p.photos} foto</div>
-                    </div>
-                </div>
-            `).join('');
+            cachedPersons = data.persons;
+            const searchInput = document.getElementById('vaultSearchInput');
+            const query = searchInput ? searchInput.value : '';
+            renderPersonsList(filterByQuery(cachedPersons, query));
         } else {
-            elements.personsGrid.innerHTML = '<div class="loading-state">Belum ada data. Jalankan train.py terlebih dahulu.</div>';
+            elements.personsGrid.innerHTML = '<div class="loading-state">Belum ada data identitas terdaftar.</div>';
         }
     } catch (err) {
         elements.personsGrid.innerHTML = '<div class="loading-state">Gagal memuat data orang.</div>';
     }
+}
+
+function filterPersonsList(query) {
+    renderPersonsList(filterByQuery(cachedPersons, query));
+}
+
+function filterByQuery(list, query) {
+    if (!query || !query.trim()) return list;
+    const q = query.toLowerCase().trim();
+    return list.filter(p => p.name.toLowerCase().includes(q));
+}
+
+function renderPersonsList(persons) {
+    if (!elements.personsGrid) return;
+    if (persons.length === 0) {
+        elements.personsGrid.innerHTML = '<div class="loading-state">Tidak ada nama yang cocok dengan pencarian.</div>';
+        return;
+    }
+    elements.personsGrid.innerHTML = persons.map(p => `
+        <div class="person-chip">
+            <div class="person-avatar">${getInitials(p.name)}</div>
+            <div class="person-info-col">
+                <div class="person-name">${escapeHtml(p.name)}</div>
+                <div class="person-photos-tag">${p.photos} sampel foto</div>
+            </div>
+            <div class="person-verified-icon" title="Terenkripsi dalam model">✓</div>
+        </div>
+    `).join('');
 }
 
 // â”€â”€â”€ Mode Switching â”€â”€â”€
@@ -560,8 +585,8 @@ function displayResults(faces, processingTime) {
         const isRecognized = face.name !== 'Unknown';
         const cardClass = isRecognized ? 'recognized' : 'unknown';
         const initials = isRecognized ? getInitials(face.name) : '?';
-        const confidenceText = isRecognized ? `${face.confidence}%` : '-';
-        const distanceText = `d=${face.distance}`;
+        const confidenceText = isRecognized ? `${face.confidence}% Cocok` : 'Tidak Terdaftar';
+        const distanceText = `Cosine: ${face.distance}`;
 
         return `
             <div class="face-card ${cardClass}">
@@ -588,14 +613,16 @@ function clearResults() {
     elements.perfTime.textContent = '- ms';
     elements.resultsList.innerHTML = `
         <div class="empty-state" id="emptyState">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="M9 3H5a2 2 0 0 0-2 2v4"/>
-                <path d="M15 3h4a2 2 0 0 1 2 2v4"/>
-                <path d="M9 21H5a2 2 0 0 1-2-2v-4"/>
-                <path d="M15 21h4a2 2 0 0 0 2-2v-4"/>
-            </svg>
-            <p>Belum ada wajah terdeteksi</p>
-            <span>Mulai kamera atau upload foto</span>
+            <div class="empty-reticle">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 15s1.5 2 4 2 4-2 4-2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+            </div>
+            <h4 class="empty-title">Menunggu Deteksi Wajah</h4>
+            <p class="empty-desc">Nyalakan kamera atau upload foto untuk melihat hasil verifikasi identitas real-time.</p>
         </div>
     `;
 }
