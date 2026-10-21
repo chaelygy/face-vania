@@ -1,4 +1,4 @@
-﻿"""
+"""
 Face Recognition System - Smart Auto Launcher
 Menjalankan Backend Python + Cloudflare Tunnel + Auto Sync ke Vercel/GitHub
 """
@@ -14,6 +14,7 @@ import signal
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APP_JS_PATH = os.path.join(BASE_DIR, "static", "app.js")
+ROOT_APP_JS_PATH = os.path.join(BASE_DIR, "app.js")
 CLOUDFLARED_EXE = os.path.join(BASE_DIR, "cloudflared.exe")
 
 def is_port_in_use(port):
@@ -63,11 +64,18 @@ def update_appjs_and_push(new_url):
         with open(APP_JS_PATH, 'w', encoding='utf-8') as f:
             f.write(updated_content)
 
-        print("[Vercel Sync] Berhasil memperbarui static/app.js.")
+        if os.path.exists(ROOT_APP_JS_PATH):
+            with open(ROOT_APP_JS_PATH, 'w', encoding='utf-8') as f:
+                f.write(updated_content)
+
+        print("[Vercel Sync] Berhasil memperbarui static/app.js dan app.js.")
         print("[Vercel Sync] Mengirim update ke GitHub agar Vercel otomatis update...")
 
         # Push to GitHub
-        subprocess.run(["git", "add", "static/app.js"], cwd=BASE_DIR, check=True)
+        files_to_add = ["static/app.js"]
+        if os.path.exists(ROOT_APP_JS_PATH):
+            files_to_add.append("app.js")
+        subprocess.run(["git", "add"] + files_to_add, cwd=BASE_DIR, check=True)
         subprocess.run(["git", "commit", "-m", f"Auto-update Cloudflare Tunnel URL: {new_url}"], cwd=BASE_DIR, check=True)
         push_res = subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR)
         

@@ -14,25 +14,23 @@
 // URL Backend Cloud publik (Hugging Face Spaces atau Cloudflare Tunnel)
 const CLOUD_BACKEND_URL = 'https://map-connections-ccd-burton.trycloudflare.com';
 
-const isVercel = Boolean(window.location.origin && window.location.origin.includes('vercel.app'));
-let defaultApi = 'http://localhost:5000';
+const isLocal = Boolean(
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === ''
+);
 
-if (isVercel) {
-    // Jika diakses dari domain Vercel (misal di HP dosen), otomatis selalu gunakan backend cloud
-    defaultApi = CLOUD_BACKEND_URL;
-} else if (window.location.origin && window.location.origin.startsWith('http')) {
-    defaultApi = window.location.origin;
-}
+let defaultApi = isLocal ? (window.location.origin || 'http://localhost:5000') : CLOUD_BACKEND_URL;
 
-// Jangan biarkan localStorage merusak koneksi di Vercel/HP dosen
-const customApi = isVercel ? null : localStorage.getItem('faceid_backend_url');
+// Jangan biarkan localStorage merusak koneksi jika diakses dari remote/Vercel
+const customApi = isLocal ? localStorage.getItem('faceid_backend_url') : null;
 const API_BASE = (customApi ? customApi.replace(/\/$/, '') : defaultApi);
 const WEBCAM_INTERVAL_MS = 1500;  // Kirim frame setiap 1.5 detik
 const JPEG_QUALITY = 0.85;
 
 function configureServerUrl() {
-    if (isVercel) {
-        // Jangan pernah munculkan prompt konfigurasi di domain Vercel untuk dosen
+    if (!isLocal) {
+        // Jangan munculkan prompt konfigurasi di domain publik/Vercel
         return;
     }
     const current = localStorage.getItem('faceid_backend_url') || API_BASE;
