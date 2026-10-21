@@ -12,7 +12,7 @@
 
 // â”€â”€â”€ Configuration â”€â”€â”€
 // URL Backend Cloud publik (Hugging Face Spaces atau Cloudflare Tunnel)
-const CLOUD_BACKEND_URL = 'https://nerve-characterization-guam-successfully.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://map-connections-ccd-burton.trycloudflare.com';
 
 const isVercel = Boolean(window.location.origin && window.location.origin.includes('vercel.app'));
 let defaultApi = 'http://localhost:5000';
