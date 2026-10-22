@@ -12,7 +12,7 @@
 
 // â”€â”€â”€ Configuration â”€â”€â”€
 // URL Backend Cloud publik (Hugging Face Spaces atau Cloudflare Tunnel)
-const CLOUD_BACKEND_URL = 'https://zinc-ties-assessing-base.trycloudflare.com';
+const CLOUD_BACKEND_URL = 'https://airline-route-zero-digit.trycloudflare.com';
 
 const isLocal = Boolean(
     window.location.hostname === 'localhost' || 
